@@ -9,13 +9,17 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Provide fallback and prevent duplicated /api
+        const envUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+        const baseURL = envUrl.endsWith('/api') ? envUrl.slice(0, -4) : envUrl;
+
         // First check if backend is healthy
-        const healthCheck = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/health`);
-        
+        const healthCheck = await axios.get(`${baseURL}/api/health`);
+
         if (healthCheck.data.status === 'healthy') {
           setStatus('Backend is connected!');
           // Then fetch the message
-          const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/message`);
+          const response = await axios.get(`${baseURL}/api/message`);
           setMessage(response.data.message);
         }
       } catch (error) {

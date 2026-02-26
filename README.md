@@ -123,3 +123,23 @@ NEXT_PUBLIC_API_URL=https://your-new-backend-url.com
 
 - `GET /api/message`: Get the integration message
   - Returns: `{"message": "You've successfully integrated the backend!"}`
+
+## Infrastructure & DevOps
+
+This repository includes a professional DevOps and Cloud Engineering setup, structured as follows:
+
+### 1. CI/CD Pipelines (`.github/workflows/`)
+- **AWS Deploy** (`aws-deploy.yml`): CI/CD pipeline for deploying the application to AWS.
+- **GCP Deploy** (`gcp-deploy.yml`): CI/CD pipeline for deploying to Google Cloud.
+
+### 2. Infrastructure as Code (IaC) (`infrastructure/`)
+Contains Terraform or similar IaC modules for both AWS and GCP:
+- **AWS Modules:** `vpc`, `ecs`, `alb`, and `iam` with environments (`dev`, `staging`, `prod`).
+- **GCP Modules:** `cloud_run`, `load_balancer`, and `iam` with environments (`dev`, `staging`, `prod`).
+
+### 3. Documentation (`docs/`)
+- Architecture diagrams outlining the cloud topologies.
+- Runbooks for operational guidelines, troubleshooting, and deployments.
+
+### 4. Assignment Source Code (`class_02_agents/`)
+- Contains the unmodified original assignment source code. The `frontend/` and `backend/` folders in the root are the functional working copies meant for active deployment and modifications.
