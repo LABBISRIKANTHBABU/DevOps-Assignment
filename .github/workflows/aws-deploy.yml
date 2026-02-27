@@ -1,0 +1,103 @@
+name: AWS ECS Deployment Pipeline
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: 657143379731.dkr.ecr.us-east-1.amazonaws.com
+  CLUSTER_NAME: pgagi-cluster-dev
+
+jobs:
+  build-and-deploy-dev:
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::657143379731:role/pgagi-github-actions-dev
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push Backend image
+        working-directory: ./backend
+        run: |
+          docker build -t $ECR_REGISTRY/pgagi-backend-dev:${{ github.sha }} .
+          docker push $ECR_REGISTRY/pgagi-backend-dev:${{ github.sha }}
+          docker tag $ECR_REGISTRY/pgagi-backend-dev:${{ github.sha }} $ECR_REGISTRY/pgagi-backend-dev:latest
+          docker push $ECR_REGISTRY/pgagi-backend-dev:latest
+
+      - name: Build, tag, and push Frontend image
+        working-directory: ./frontend
+        run: |
+          docker build --build-arg NEXT_PUBLIC_API_URL=/api -t $ECR_REGISTRY/pgagi-frontend-dev:${{ github.sha }} .
+          docker push $ECR_REGISTRY/pgagi-frontend-dev:${{ github.sha }}
+          docker tag $ECR_REGISTRY/pgagi-frontend-dev:${{ github.sha }} $ECR_REGISTRY/pgagi-frontend-dev:latest
+          docker push $ECR_REGISTRY/pgagi-frontend-dev:latest
+
+      - name: Deploy to ECS Dev
+        run: |
+          aws ecs update-service --cluster $CLUSTER_NAME --service pgagi-backend-dev --force-new-deployment
+          aws ecs update-service --cluster $CLUSTER_NAME --service pgagi-frontend-dev --force-new-deployment
+
+      - name: Wait for service stability
+        run: |
+          aws ecs wait services-stable --cluster $CLUSTER_NAME --services pgagi-backend-dev pgagi-frontend-dev
+
+  deploy-staging:
+    needs: build-and-deploy-dev
+    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::657143379731:role/pgagi-github-actions-dev
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Deploy to ECS Staging
+        run: |
+          # Uses the images pushed by the dev build step
+          aws ecs update-service --cluster pgagi-cluster-staging --service pgagi-backend-staging --force-new-deployment
+          aws ecs update-service --cluster pgagi-cluster-staging --service pgagi-frontend-staging --force-new-deployment
+
+  deploy-prod:
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::657143379731:role/pgagi-github-actions-dev
+          aws-region: ${{ env.AWS_REGION }}
+          
+      - name: Deploy to ECS Prod
+        run: |
+          aws ecs update-service --cluster pgagi-cluster-prod --service pgagi-backend-prod --force-new-deployment
+          aws ecs update-service --cluster pgagi-cluster-prod --service pgagi-frontend-prod --force-new-deployment
