@@ -1,0 +1,55 @@
+name: Azure Container Apps Deployment
+
+on:
+  push:
+    branches: [main, develop, staging]
+  workflow_dispatch:
+
+env:
+  AZURE_RG_PREFIX: pgagi
+  ACR_NAME: pgagiacr5642c847ant1
+
+jobs:
+  deploy-dev:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    environment: azure-dev
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: ACR Login
+        run: az acr login --name ${{ env.ACR_NAME }}
+      
+      - name: Build & Push Backend
+        working-directory: ./backend
+        run: |
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/pgagi-backend-dev:${{ github.sha }} .
+          docker push ${{ env.ACR_NAME }}.azurecr.io/pgagi-backend-dev:${{ github.sha }}
+          docker tag ${{ env.ACR_NAME }}.azurecr.io/pgagi-backend-dev:${{ github.sha }} ${{ env.ACR_NAME }}.azurecr.io/pgagi-backend-dev:latest
+          docker push ${{ env.ACR_NAME }}.azurecr.io/pgagi-backend-dev:latest
+      
+      - name: Build & Push Frontend
+        working-directory: ./frontend
+        run: |
+          docker build --build-arg NEXT_PUBLIC_API_URL=/api -t ${{ env.ACR_NAME }}.azurecr.io/pgagi-frontend-dev:${{ github.sha }} .
+          docker push ${{ env.ACR_NAME }}.azurecr.io/pgagi-frontend-dev:${{ github.sha }}
+          docker tag ${{ env.ACR_NAME }}.azurecr.io/pgagi-frontend-dev:${{ github.sha }} ${{ env.ACR_NAME }}.azurecr.io/pgagi-frontend-dev:latest
+          docker push ${{ env.ACR_NAME }}.azurecr.io/pgagi-frontend-dev:latest
+      
+      - name: Deploy to Azure Container Apps
+        run: |
+          az containerapp update --name pgagi-backend-dev --resource-group ${{ env.AZURE_RG_PREFIX }}-dev-rg --image ${{ env.ACR_NAME }}.azurecr.io/pgagi-backend-dev:latest
+          az containerapp update --name pgagi-frontend-dev --resource-group ${{ env.AZURE_RG_PREFIX }}-dev-rg --image ${{ env.ACR_NAME }}.azurecr.io/pgagi-frontend-dev:latest
+      
+      - name: Verify Deployment
+        run: |
+          sleep 30
+          BACKEND_FQDN=$(az containerapp show --name pgagi-backend-dev --resource-group ${{ env.AZURE_RG_PREFIX }}-dev-rg --query properties.configuration.ingress.fqdn -o tsv)
+          curl -f https://$BACKEND_FQDN/api/health || exit 1
+          echo "✅ Azure Dev deployment successful!"

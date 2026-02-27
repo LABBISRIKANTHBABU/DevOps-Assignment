@@ -1,0 +1,22 @@
+﻿Acquiring state lock. This may take a few moments...
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform planned the following actions, but then encountered a problem:
+
+  # module.acr.azurerm_resource_group.acr will be created
+  + resource "azurerm_resource_group" "acr" {
+      + id       = (known after apply)
+      + location = "eastus"
+      + name     = "pgagi-acr-rg"
+      + tags     = {
+          + "Environment" = "shared"
+          + "ManagedBy"   = "terraform"
+          + "Project"     = "pgagi-devops"
+        }
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+Releasing state lock. This may take a few moments...

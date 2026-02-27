@@ -1,0 +1,14 @@
+﻿{
+  "environmentName": "AzureCloud",
+  "homeTenantId": "f978bbdf-5b09-4b19-8be7-f4f427761b55",
+  "id": "e3a4ad23-78db-4941-b290-3099d0d04762",
+  "isDefault": true,
+  "managedByTenants": [],
+  "name": "Azure subscription 1",
+  "state": "Enabled",
+  "tenantId": "f978bbdf-5b09-4b19-8be7-f4f427761b55",
+  "user": {
+    "name": "kanthbabusri@outlook.com",
+    "type": "user"
+  }
+}

@@ -1,0 +1,60 @@
+{
+    "widgets": [
+        {
+            "type": "metric",
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 6,
+            "properties": {
+                "metrics": [
+                    [
+                        "AWS/ECS",
+                        "CPUUtilization",
+                        "ServiceName",
+                        "pgagi-backend-dev",
+                        "ClusterName",
+                        "pgagi-cluster-dev"
+                    ],
+                    [
+                        ".",
+                        ".",
+                        ".",
+                        "pgagi-frontend-dev",
+                        ".",
+                        "."
+                    ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-east-1",
+                "title": "ECS CPU Utilization",
+                "period": 300,
+                "stat": "Average"
+            }
+        },
+        {
+            "type": "metric",
+            "x": 12,
+            "y": 0,
+            "width": 12,
+            "height": 6,
+            "properties": {
+                "metrics": [
+                    [
+                        "AWS/ApplicationELB",
+                        "RequestCount",
+                        "LoadBalancer",
+                        "app/pgagi-alb-dev/6b1a313cb4363fc2"
+                    ]
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "us-east-1",
+                "title": "ALB Request Count",
+                "period": 300,
+                "stat": "Sum"
+            }
+        }
+    ]
+}
