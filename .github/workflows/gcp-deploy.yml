@@ -1,0 +1,13 @@
+# GCP Deployment Workflow
+name: GCP Deploy
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy to GCP
+        run: echo "Deploying to GCP..."
