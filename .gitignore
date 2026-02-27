@@ -1,8 +1,9 @@
-.github/
-frontend/
-backend/
 *.tfstate
 *.tfstate.*
 .terraform/
 .env
 .env.local
+node_modules/
+.next/
+__pycache__/
+*.pyc
